@@ -19,14 +19,15 @@ import check_pip_compile
 @click.argument(
     "paths", type=click.Path(exists=True, file_okay=True, dir_okay=True), nargs=-1
 )
+@click.option('-o', '--output-file', required=True)
 def entry_point(paths):
     """Check if pip-compile needs to be run."""
     succeeded = True
     for in_file in paths:
         if os.path.isdir(in_file):
-            tmp = check_directory(in_file)
+            tmp = check_directory(in_file, output_file)
         else:
-            txt_file: Optional[str] = get_corresponding_txt_file(in_file)
+            txt_file: Optional[str] = output_file
             if not txt_file or not os.path.isfile(txt_file):
                 txt_file = None
             tmp = check_file(in_file, txt_file)
@@ -35,7 +36,7 @@ def entry_point(paths):
         sys.exit(-1)
 
 
-def check_directory(path: str) -> bool:
+def check_directory(path: str, output_file: str) -> bool:
     in_files = discover_in_files(path)
     txt_files = discover_txt_files(path)
     matched_files = match_in_with_txt(in_files, txt_files)
@@ -79,11 +80,11 @@ def discover_txt_files(path: str) -> List[str]:
     return [str(el) for el in p.glob("*.txt")]
 
 
-def get_corresponding_txt_file(in_file: str) -> str:
+def get_corresponding_txt_file(in_file: str, compiled_file: str) -> str:
     if in_file.endswith("setup.py"):
         txt_file = in_file[: -len("setup.py")] + "requirements.txt"
     else:
-        txt_file = in_file[:-2] + "txt"
+        txt_file = compiled_file
     return txt_file
 
 
@@ -92,7 +93,7 @@ def match_in_with_txt(
 ) -> List[Tuple[Optional[str], Optional[str]]]:
     matched_files: List[Tuple[Optional[str], Optional[str]]] = []
     for in_file in in_files:
-        txt_file = get_corresponding_txt_file(in_file)
+        txt_file = get_corresponding_txt_file(in_file, output_file)
         if txt_file in txt_files:
             matched_files.append((in_file, txt_file))
             txt_files.remove(txt_file)
