@@ -20,7 +20,7 @@ import check_pip_compile
     "paths", type=click.Path(exists=True, file_okay=True, dir_okay=False), nargs=-1
 )
 @click.option('-o', '--output-file', required=True)
-def entry_point(paths):
+def entry_point(paths, output_file):
     """Check if pip-compile needs to be run."""
     succeeded = True
     for in_file in paths:
